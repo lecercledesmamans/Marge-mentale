@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Marge Mentale™</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --beige:#F7F3EE;--beige-dk:#EDE7DC;--cream:#FAF8F5;
+  --rose:#E8B4C0;--rose-lt:#F5E0E6;--rose-md:#D4889A;
+  --coral:#E07060;--coral-lt:#F2C4BC;--coral-dk:#C05545;
+  --taupe:#9B8B7A;--taupe-lt:#C4B5A5;
+  --brown:#5C4A3A;--text-dk:#3A2E26;--text-md:#7A6558;--text-lt:#A8998C;
+  --white:#FEFCFA;--green:#9DC4A0;--green-lt:#E8F2E9;
+  --amber:#E8A84A;--amber-lt:#FBF0DC;--red:#D45A5A;--red-lt:#F8E8E8;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--beige);color:var(--text-dk);}
+.app{display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:210px;flex-shrink:0;background:var(--white);border-right:1px solid var(--beige-dk);display:flex;flex-direction:column;padding:24px 0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.s-logo{padding:0 20px 22px;border-bottom:1px solid var(--beige-dk);margin-bottom:16px;}
+.s-logo-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--brown);letter-spacing:.02em;}
+.s-logo-tag{font-size:9px;color:var(--text-lt);letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+.nav-i{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;color:var(--text-md);cursor:pointer;border-left:2px solid transparent;transition:all .15s;}
+.nav-i:hover{background:var(--beige);color:var(--brown);}
+.nav-i.on{background:var(--rose-lt);color:var(--coral-dk);border-left:2px solid var(--coral);font-weight:500;}
+.nav-i svg{width:15px;height:15px;opacity:.6;flex-shrink:0;}
+.nav-i.on svg{opacity:1;}
+.s-remind{margin:auto 14px 0;background:var(--rose-lt);border-radius:10px;padding:14px;text-align:center;}
+.s-remind p{font-size:11px;color:var(--text-md);line-height:1.5;font-style:italic;}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;padding:32px;}
+.view{display:none;}.view.on{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.fade-up{animation:fadeUp .35s ease both;}
+
+/* ── BUTTONS ── */
+.btn-p{background:var(--coral);color:white;border:none;padding:13px 28px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;letter-spacing:.02em;}
+.btn-p:hover{background:var(--coral-dk);transform:translateY(-1px);}
+.btn-s{background:transparent;color:var(--text-md);border:1px solid var(--beige-dk);padding:11px 22px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;}
+.btn-s:hover{background:var(--beige-dk);}
+.btn-rf{display:inline-flex;align-items:center;gap:5px;background:var(--rose-lt);color:var(--coral-dk);border:1px solid var(--coral-lt);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
+.btn-rf:hover{background:var(--coral-lt);}
+
+/* ── AUTH ── */
+.auth-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(92,74,58,0.55);display:flex;align-items:center;justify-content:center;z-index:100;}
+.auth-modal{background:var(--white);border-radius:24px;padding:36px 40px;width:100%;max-width:400px;margin:16px;}
+.auth-logo-m{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:var(--brown);text-align:center;margin-bottom:4px;}
+.auth-sub{font-size:12px;color:var(--text-lt);text-align:center;margin-bottom:22px;}
+.auth-tabs{display:flex;background:var(--beige);border-radius:10px;padding:3px;margin-bottom:20px;}
+.auth-tab{flex:1;padding:8px;text-align:center;font-size:13px;color:var(--text-md);cursor:pointer;border-radius:8px;transition:all .15s;}
+.auth-tab.on{background:var(--white);color:var(--text-dk);font-weight:500;}
+.auth-field{margin-bottom:13px;}
+.auth-field label{display:block;font-size:10px;font-weight:500;color:var(--text-md);margin-bottom:4px;letter-spacing:.05em;text-transform:uppercase;}
+.auth-field input{width:100%;padding:11px 14px;border:1px solid var(--beige-dk);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-dk);background:var(--cream);outline:none;transition:border .15s;}
+.auth-field input:focus{border-color:var(--coral);}
+.auth-err{font-size:11px;color:var(--red);margin-bottom:10px;display:none;}
+.auth-ok{font-size:12px;color:#3a6640;background:var(--green-lt);padding:10px 14px;border-radius:9px;margin-bottom:12px;display:none;}
+.auth-switch{text-align:center;margin-top:14px;font-size:12px;color:var(--text-md);}
+.auth-switch a{color:var(--coral);cursor:pointer;}
+.user-pill{display:flex;align-items:center;gap:8px;padding:10px 20px;background:var(--beige);margin:0 14px 8px;border-radius:10px;}
+.user-av{width:28px;height:28px;border-radius:50%;background:var(--rose-lt);border:1.5px solid var(--rose-md);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--coral-dk);flex-shrink:0;}
+.user-nm{font-size:12px;font-weight:500;color:var(--text-dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+.user-out{font-size:10px;color:var(--text-lt);cursor:pointer;white-space:nowrap;}
+.user-out:hover{color:var(--coral);}
+
+/* ── INTRO ── */
+.intro-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:65vh;text-align:center;padding:40px 20px;}
+.intro-logo{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;color:var(--brown);margin-bottom:8px;}
+.intro-tag{font-size:14px;color:var(--text-md);max-width:380px;margin-bottom:40px;line-height:1.7;}
+.intro-card{background:var(--white);border:1px solid var(--beige-dk);border-radius:24px;padding:36px 40px;max-width:460px;width:100%;margin-bottom:22px;}
+.intro-feat{list-style:none;text-align:left;margin-bottom:28px;}
+.intro-feat li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-md);margin-bottom:12px;}
+.intro-feat li::before{content:'♡';color:var(--coral);font-size:14px;flex-shrink:0;}
+
+/* ── QUESTIONNAIRE ── */
+.q-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:400;color:var(--brown);line-height:1.2;margin-bottom:8px;}
+.q-sub{font-size:14px;color:var(--text-md);line-height:1.6;max-width:520px;margin-bottom:22px;}
+.prog-wrap{background:var(--beige-dk);height:4px;border-radius:99px;margin-bottom:7px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--coral);border-radius:99px;transition:width .4s ease;}
+.prog-lbl{font-size:12px;color:var(--text-lt);margin-bottom:22px;}
+.sph-tag{display:inline-flex;align-items:center;gap:8px;background:var(--rose-lt);color:var(--coral-dk);font-size:12px;font-weight:500;padding:5px 14px;border-radius:20px;margin-bottom:22px;letter-spacing:.04em;}
+.q-card{background:var(--white);border:1px solid var(--beige-dk);border-radius:18px;padding:26px 30px;margin-bottom:16px;}
+.q-text{font-size:16px;color:var(--text-dk);line-height:1.6;margin-bottom:20px;}
+.ans-opts{display:flex;gap:8px;flex-wrap:wrap;}
+.ans-btn{flex:1;min-width:80px;padding:11px 8px;border:1px solid var(--beige-dk);border-radius:10px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-md);cursor:pointer;text-align:center;transition:all .15s;line-height:1.3;}
+.ans-btn:hover{border-color:var(--rose-md);background:var(--rose-lt);color:var(--coral-dk);}
+.ans-btn.sel{border-color:var(--coral);background:var(--coral);color:white;font-weight:500;}
+.q-nav{display:flex;align-items:center;justify-content:space-between;margin-top:28px;}
+
+/* ── LOADING ── */
+.load-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;text-align:center;gap:22px;}
+.load-ring{width:56px;height:56px;border:3px solid var(--rose-lt);border-top:3px solid var(--coral);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.load-title{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--brown);}
+.load-sub{font-size:13px;color:var(--text-md);}
+.load-steps{display:flex;flex-direction:column;gap:9px;}
+.l-step{font-size:12px;color:var(--text-lt);display:flex;align-items:center;gap:8px;}
+.l-step.active{color:var(--coral);font-weight:500;}
+.l-step.done{color:var(--green);}
+
+/* ── DASHBOARD ── */
+.db-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;flex-wrap:wrap;gap:14px;}
+.db-t{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--brown);line-height:1.1;}
+.db-t span{display:block;font-size:16px;color:var(--coral);font-style:italic;margin-top:4px;}
+.db-meta{text-align:right;font-size:12px;color:var(--text-lt);line-height:1.8;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.card{background:var(--white);border:1px solid var(--beige-dk);border-radius:18px;padding:20px 22px;}
+.card-t{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-lt);margin-bottom:14px;}
+.sec-t{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--brown);margin:18px 0 13px;}
+
+/* Jauge */
+.g-wrap{display:flex;align-items:center;gap:18px;}
+.g-pct{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;color:var(--brown);line-height:1;}
+.g-lbl{font-size:13px;font-weight:500;color:var(--coral-dk);margin:4px 0 7px;}
+.g-desc{font-size:12px;color:var(--text-md);line-height:1.6;}
+
+/* Profil */
+.prof-av{width:50px;height:50px;border-radius:50%;background:var(--rose-lt);border:2px solid var(--rose);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.prof-nm{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--coral-dk);line-height:1.2;}
+
+/* Marge */
+.marge-pct{font-family:'Cormorant Garamond',serif;font-size:50px;font-weight:300;color:var(--red);line-height:1;}
+.marge-badge{display:inline-block;background:var(--red-lt);color:var(--red);font-size:10px;font-weight:500;padding:2px 10px;border-radius:20px;margin-bottom:5px;}
+
+/* Fuites */
+.fuite-i{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+.fuite-l{font-size:12px;color:var(--text-dk);flex:1;}
+.fuite-bw{flex:1.5;height:5px;background:var(--beige-dk);border-radius:99px;overflow:hidden;}
+.fuite-b{height:100%;border-radius:99px;background:var(--coral);}
+.fuite-p{font-size:12px;font-weight:500;color:var(--coral-dk);min-width:30px;text-align:right;}
+
+/* Quote */
+.quote-card{background:var(--rose-lt);border-radius:18px;padding:22px 26px;position:relative;overflow:hidden;margin-bottom:16px;}
+.quote-m{font-family:'Cormorant Garamond',serif;font-size:72px;color:var(--rose);position:absolute;top:-12px;left:18px;line-height:1;pointer-events:none;}
+.quote-t{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:var(--brown);line-height:1.7;padding-left:22px;position:relative;}
+
+/* Priorités */
+.pri-i{display:flex;align-items:flex-start;gap:13px;padding:15px;border:1px solid var(--beige-dk);border-radius:12px;margin-bottom:10px;background:var(--white);}
+.pri-n{width:27px;height:27px;border-radius:50%;background:var(--coral);color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
+.pri-n.n2{background:var(--rose-md);}
+.pri-n.n3{background:var(--taupe-lt);}
+.pri-t{font-size:14px;font-weight:500;color:var(--text-dk);margin-bottom:3px;}
+.pri-d{font-size:12px;color:var(--text-md);line-height:1.5;}
+
+/* Sphères */
+.sph-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.sph-c{background:var(--white);border:1px solid var(--beige-dk);border-radius:14px;padding:14px;text-align:center;}
+.sph-em{font-size:22px;margin-bottom:7px;}
+.sph-nm{font-size:10px;color:var(--text-md);margin-bottom:6px;line-height:1.3;}
+.sph-sc{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--brown);line-height:1;}
+.sph-mx{font-size:10px;color:var(--text-lt);}
+.dot-r{width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;margin-bottom:6px;}
+.dot-a{width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block;margin-bottom:6px;}
+.dot-g{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-bottom:6px;}
+.sc-crit .sph-sc{color:var(--red);}
+.sc-warn .sph-sc{color:var(--amber);}
+.sc-ok .sph-sc{color:var(--green);}
+
+/* AI section */
+.ai-sec{background:var(--white);border:1px solid var(--beige-dk);border-radius:18px;padding:20px 22px;margin-bottom:14px;}
+.ai-badge{display:inline-flex;align-items:center;gap:5px;background:var(--rose-lt);color:var(--coral-dk);font-size:10px;font-weight:500;padding:3px 10px;border-radius:20px;margin-bottom:12px;}
+.ai-text{font-size:13px;color:var(--text-md);line-height:1.8;}
+
+/* Actions */
+.act-rp{background:var(--white);border:1px solid var(--beige-dk);border-radius:18px;padding:18px 22px;display:flex;align-items:center;gap:16px;margin-top:14px;}
+.act-em{font-size:22px;flex-shrink:0;}
+.act-t{font-size:13px;font-weight:500;color:var(--brown);margin-bottom:3px;}
+.act-d{font-size:12px;color:var(--text-md);line-height:1.5;}
+.btn-act{background:var(--coral);color:white;border:none;padding:10px 20px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0;}
+.btn-act:hover{background:var(--coral-dk);transform:translateY(-1px);}
+
+/* Radar */
+.radar-legend{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:10px;}
+.leg-i{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-md);}
+.leg-d{width:6px;height:6px;border-radius:50%;}
+
+/* Historique */
+.hist-item{background:var(--white);border:1px solid var(--beige-dk);border-radius:14px;padding:16px 18px;margin-bottom:10px;display:flex;align-items:center;gap:16px;}
+.hist-date{font-size:12px;color:var(--text-md);min-width:110px;}
+.hist-score{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;line-height:1;}
+.hist-lbl{font-size:11px;font-weight:500;margin-top:2px;}
+.hist-prof{font-size:12px;color:var(--text-md);flex:1;line-height:1.4;}
+.trend-dn{font-size:11px;color:var(--green);display:flex;align-items:center;gap:4px;}
+.trend-eq{font-size:11px;color:var(--text-lt);}
+
+/* Toast */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--brown);color:white;font-size:13px;padding:11px 18px;border-radius:12px;display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+@media(max-width:700px){
+  .sidebar{display:none;}
+  .grid2{grid-template-columns:1fr;}
+  .sph-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast">✓ Sauvegardé</div>
+
+<!-- ═══ AUTH MODAL ═══ -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-modal">
+    <div class="auth-logo-m">Marge Mentale™</div>
+    <div class="auth-sub">Ton espace personnel de régulation mentale</div>
+    <div class="auth-tabs">
+      <div class="auth-tab on" id="tab-in" onclick="authTab('in')">Connexion</div>
+      <div class="auth-tab" id="tab-up" onclick="authTab('up')">Créer un compte</div>
+    </div>
+    <div class="auth-ok" id="auth-ok-msg"></div>
+    <div class="auth-err" id="auth-err-msg"></div>
+
+    <!-- Connexion -->
+    <div id="form-in">
+      <div class="auth-field"><label>Courriel</label><input type="email" id="in-email" placeholder="prenom@exemple.com"/></div>
+      <div class="auth-field"><label>Mot de passe</label><input type="password" id="in-pwd" placeholder="••••••••"/></div>
+      <button class="btn-p" style="width:100%;margin-top:4px;" id="btn-in" onclick="doLogin()">Se connecter</button>
+      <div class="auth-switch">Pas encore de compte ? <a onclick="authTab('up')">S'inscrire</a></div>
+    </div>
+
+    <!-- Inscription -->
+    <div id="form-up" style="display:none">
+      <div class="auth-field"><label>Prénom</label><input type="text" id="up-prenom" placeholder="Sophie"/></div>
+      <div class="auth-field"><label>Courriel</label><input type="email" id="up-email" placeholder="prenom@exemple.com"/></div>
+      <div class="auth-field"><label>Mot de passe</label><input type="password" id="up-pwd" placeholder="Minimum 8 caractères"/></div>
+      <button class="btn-p" style="width:100%;margin-top:4px;" id="btn-up" onclick="doSignup()">Créer mon compte</button>
+      <div class="auth-switch">Déjà un compte ? <a onclick="authTab('in')">Se connecter</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="s-logo">
+    <div class="s-logo-name">Marge Mentale™</div>
+    <div class="s-logo-tag">Maman en paix, famille heureuse</div>
+  </div>
+  <!-- Utilisatrice connectée -->
+  <div class="user-pill" id="user-pill" style="display:none">
+    <div class="user-av" id="user-av">M</div>
+    <div class="user-nm" id="user-nm">—</div>
+    <div class="user-out" onclick="doLogout()">Déconnexion</div>
+  </div>
+  <nav>
+    <div class="nav-i" id="n-accueil" onclick="nav('intro')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>Accueil
+    </div>
+    <div class="nav-i on" id="n-diag" onclick="nav('questionnaire')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg>Mon diagnostic
+    </div>
+    <div class="nav-i" id="n-db" onclick="nav('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Tableau de bord
+    </div>
+    <div class="nav-i" id="n-sph" onclick="nav('spheres')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l4 4"/></svg>Mes sphères
+    </div>
+    <div class="nav-i" id="n-act" onclick="nav('actions')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Mes actions
+    </div>
+    <div class="nav-i" id="n-hist" onclick="nav('historique')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Mes progrès
+    </div>
+  </nav>
+  <div class="s-remind">
+    <div style="color:var(--coral);font-size:18px;margin-bottom:6px;">♡</div>
+    <p>Tu n'as pas à tout porter seule. Petit pas par petit pas, tu reprends ton pouvoir mental.</p>
+    <div style="color:var(--coral);font-size:12px;margin-top:8px;">♡</div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+
+<!-- INTRO -->
+<div class="view" id="v-intro">
+  <div class="intro-wrap fade-up">
+    <div class="intro-logo">Marge Mentale™</div>
+    <p class="intro-tag">Ton système doux et intelligent pour mesurer, comprendre et alléger ta charge mentale maternelle.</p>
+    <div class="intro-card">
+      <ul class="intro-feat">
+        <li>Évalue ton niveau réel de saturation mentale</li>
+        <li>Identifie tes sphères les plus épuisantes</li>
+        <li>Reçois un plan personnalisé généré par IA</li>
+        <li>Suis ton évolution semaine après semaine</li>
+      </ul>
+      <button class="btn-p" style="width:100%;font-size:15px;padding:16px;" onclick="nav('questionnaire')">Commencer mon diagnostic →</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-lt);font-style:italic;">40 questions · 8–12 minutes · Résultats IA instantanés</p>
+  </div>
+</div>
+
+<!-- QUESTIONNAIRE -->
+<div class="view on" id="v-questionnaire">
+  <h1 class="q-title">Ton diagnostic de<br>charge mentale</h1>
+  <p class="q-sub">Réponds instinctivement. Il n'y a pas de bonne ou mauvaise réponse — seulement ta vérité du moment.</p>
+  <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:5%"></div></div>
+  <p class="prog-lbl" id="prog-lbl">Question 1 sur 40</p>
+  <div class="sph-tag"><span id="sph-em">😴</span>&nbsp;<span id="sph-nm">Sommeil &amp; énergie</span></div>
+  <div id="q-container"></div>
+  <div class="q-nav">
+    <button class="btn-s" id="btn-prev" onclick="prevQ()" style="opacity:0;pointer-events:none">← Précédent</button>
+    <button class="btn-p" id="btn-next" onclick="nextQ()">Suivant →</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="view" id="v-loading">
+  <div class="load-screen fade-up">
+    <div class="load-ring"></div>
+    <div class="load-title">Analyse de ta charge mentale…</div>
+    <p class="load-sub">Notre IA prend le temps de tout lire avec soin.</p>
+    <div class="load-steps">
+      <div class="l-step active" id="ls1">⟳ Calcul des scores par sphère…</div>
+      <div class="l-step" id="ls2">⟳ Identification du profil dominant…</div>
+      <div class="l-step" id="ls3">⟳ Analyse des fuites d'énergie…</div>
+      <div class="l-step" id="ls4">⟳ Génération des recommandations IA…</div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="view" id="v-dashboard">
+  <div class="db-hdr">
+    <div>
+      <h1 class="db-t">Ton tableau de bord<span>de ta charge mentale</span></h1>
+      <p style="font-size:13px;color:var(--text-md);max-width:400px;margin-top:6px;line-height:1.6;">Vue claire de ta saturation actuelle, tes zones de surcharge et tes priorités pour retrouver de l'espace.</p>
+    </div>
+    <div class="db-meta">
+      <div>Évaluation du</div>
+      <div style="font-weight:500;color:var(--text-dk);" id="db-date"></div>
+      <button class="btn-rf" style="margin-top:6px;" onclick="resetDiag()">↺ Refaire le diagnostic</button>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-t">Niveau de saturation</div>
+      <div class="g-wrap">
+        <svg width="105" height="76" viewBox="0 0 105 76">
+          <path d="M 12 68 A 38 38 0 0 1 93 68" stroke="#EDE7DC" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path id="g-arc" d="M 12 68 A 38 38 0 0 1 12 68" stroke="#E07060" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <circle id="g-dot" cx="12" cy="68" r="4" fill="#E07060"/>
+        </svg>
+        <div>
+          <div class="g-pct"><span id="g-val">—</span><span style="font-size:20px;">%</span></div>
+          <div class="g-lbl" id="g-lbl">—</div>
+          <div class="g-desc" id="g-desc">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Ton profil</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div class="prof-av">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="5" fill="#D4889A" opacity=".6"/><path d="M4 24c0-5.5 4.5-9 10-9s10 3.5 10 9" fill="#D4889A" opacity=".4"/></svg>
+        </div>
+        <div class="prof-nm" id="prof-nm">—</div>
+      </div>
+      <p style="font-size:12px;color:var(--text-md);line-height:1.7;margin-bottom:8px;" id="prof-desc">—</p>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Ta marge mentale restante</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+        <div class="marge-pct" id="marge-val">—</div>
+        <div>
+          <div class="marge-badge" id="marge-badge">—</div>
+          <p style="font-size:12px;color:var(--text-md);line-height:1.6;" id="marge-desc">—</p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;background:var(--beige);border-radius:8px;padding:8px 12px;font-size:11px;color:var(--text-md);">
+        <span>🎯</span><span>Objectif : remonter ta marge à au moins 30%</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-t">Où ton énergie fuit le plus</div>
+      <div id="fuites-list"></div>
+    </div>
+  </div>
+
+  <div class="quote-card">
+    <div class="quote-m">"</div>
+    <p class="quote-t" id="ai-quote">Chargement…</p>
+  </div>
+
+  <div class="sec-t">Tes 3 priorités des 7 prochains jours</div>
+  <div id="priorites-list"></div>
+
+  <div class="ai-sec">
+    <div class="ai-badge">✦ Analyse personnalisée par IA</div>
+    <div class="ai-text" id="ai-narrative">Génération en cours…</div>
+  </div>
+
+  <div class="card">
+    <div class="card-t">Radar de saturation — tes 8 sphères</div>
+    <div style="display:flex;align-items:center;justify-content:center;">
+      <canvas id="radar" role="img" aria-label="Radar des 8 sphères de charge mentale" style="max-width:320px;max-height:280px;"></canvas>
+    </div>
+    <div class="radar-legend">
+      <div class="leg-i"><div class="leg-d" style="background:var(--red)"></div>0–3 Critique</div>
+      <div class="leg-i"><div class="leg-d" style="background:var(--amber)"></div>4–6 À surveiller</div>
+      <div class="leg-i"><div class="leg-d" style="background:var(--green)"></div>7–10 Équilibre</div>
+    </div>
+  </div>
+
+  <div class="act-rp">
+    <div class="act-em">💡</div>
+    <div><div class="act-t">Action rapide à faire maintenant</div><p class="act-d" id="act-rapide">Chargement…</p></div>
+    <button class="btn-act">Je le fais</button>
+  </div>
+</div>
+
+<!-- SPHÈRES -->
+<div class="view" id="v-spheres">
+  <h1 class="q-title" style="margin-bottom:8px">Mes sphères</h1>
+  <p style="font-size:14px;color:var(--text-md);margin-bottom:26px;">Détail de tes 8 zones de vie et leur niveau de saturation.</p>
+  <div class="sph-grid" id="sph-grid"></div>
+  <div class="card">
+    <div class="card-t">Analyse IA de tes sphères</div>
+    <p class="ai-text" id="sph-ai-text" style="font-size:12px;">Complète d'abord ton diagnostic.</p>
+  </div>
+</div>
+
+<!-- ACTIONS -->
+<div class="view" id="v-actions">
+  <h1 class="q-title" style="margin-bottom:8px">Mes actions</h1>
+  <p style="font-size:14px;color:var(--text-md);margin-bottom:26px;">Tes micro-actions personnalisées pour alléger ta charge dès aujourd'hui.</p>
+  <div id="actions-list"></div>
+</div>
+
+<!-- HISTORIQUE -->
+<div class="view" id="v-historique">
+  <div class="db-hdr">
+    <h1 class="db-t">Mes progrès<span>Évolution de ta charge mentale</span></h1>
+    <button class="btn-rf" onclick="nav('questionnaire')">+ Nouveau diagnostic</button>
+  </div>
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-t">Évolution du score de saturation</div>
+    <div style="position:relative;height:180px;"><canvas id="evol-chart" role="img" aria-label="Évolution du score de saturation">Tendance décroissante.</canvas></div>
+    <div style="font-size:11px;color:var(--green);margin-top:10px;display:flex;align-items:center;gap:5px;">▼ Progression visible au fil des semaines</div>
+  </div>
+  <div class="sec-t">Historique des diagnostics</div>
+  <div id="hist-list"></div>
+</div>
+
+</main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONFIGURATION SUPABASE
+   ⚠️  Remplace ces deux valeurs par les tiennes
+   (Supabase → Project Settings → API)
+═══════════════════════════════════════════ */
+const SUPABASE_URL = 'COLLE_TON_URL_ICI'       // ex: https://xxxx.supabase.co
+const SUPABASE_KEY = 'COLLE_TA_ANON_KEY_ICI'   // ex: eyJhbGci...
+
+const { createClient } = supabase
+const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+/* ═══════════════════════════════════════════
+   DONNÉES
+═══════════════════════════════════════════ */
+const SPHERES = [
+  {n:'Sommeil & énergie',       e:'😴', k:'sommeil'},
+  {n:'Charge domestique',       e:'🏠', k:'domestique'},
+  {n:'Charge parentale',        e:'👶', k:'parentale'},
+  {n:'Charge émotionnelle',     e:'💝', k:'emotionnelle'},
+  {n:'Soutien & entourage',     e:'🤝', k:'soutien'},
+  {n:'Organisation & planif.',  e:'📋', k:'organisation'},
+  {n:'Temps pour soi',          e:'🌸', k:'tempspoursoi'},
+  {n:'Imprévus & interruptions',e:'⚡', k:'imprevus'}
+];
+
+const QS = [
+  ["J'ai du mal à m'endormir à cause de mes pensées.","Je me réveille fatiguée même après une nuit complète.","Je n'ai plus d'énergie pour les activités qui me plaisaient.","Je ressens un épuisement qui ne part pas avec le repos.","Je carbure à la volonté plutôt qu'à l'énergie naturelle."],
+  ["Je gère la majorité des tâches ménagères seule.","Je pense aux corvées même quand je veux me reposer.","La maison ne semble jamais vraiment en ordre.","Je planifie les repas, les courses et la logistique seule.","Je me sens responsable de tout dans la maison."],
+  ["Je gère la majorité des besoins de mes enfants seule.","Je pense constamment aux rendez-vous et besoins des enfants.","Je culpabilise de ne pas en faire assez pour mes enfants.","Je dois souvent interrompre ce que je fais pour les enfants.","Je me sens seule à porter la charge mentale parentale."],
+  ["Je gère les émotions des autres (enfants, partenaire).","Je me sens le pilier émotionnel de ma famille.","J'absorbe les tensions et conflits familiaux.","Je mets mes propres émotions de côté pour les autres.","Je me sens épuisée après des interactions avec mes proches."],
+  ["Je me sens seule dans ma charge mentale.","Mon entourage ne comprend pas vraiment ce que je vis.","Je n'ai personne à qui demander de l'aide facilement.","Je n'ose pas demander de l'aide par peur de déranger.","Je reçois peu de reconnaissance pour tout ce que je fais."],
+  ["Je dois garder en tête des dizaines de tâches à la fois.","J'ai peur d'oublier quelque chose d'important.","Je planifie la semaine et la logistique à l'avance.","Je me sens débordée par la quantité de choses à organiser.","Je n'ai jamais l'impression d'être vraiment à jour."],
+  ["J'ai du mal à trouver du temps rien que pour moi.","Je culpabilise quand je prends du temps pour moi.","Mes loisirs ont disparu de ma vie.","Je n'ai pas de moment dans ma journée qui m'appartient.","Je passe en dernier dans ma propre liste de priorités."],
+  ["Les imprévus me déstabilisent et augmentent mon stress.","Je suis souvent interrompue dans ce que je fais.","J'ai du mal à récupérer après un imprévu ou une urgence.","La charge des imprévus s'ajoute à une charge déjà lourde.","Je me sens en mode pompier plutôt qu'en mode construction."]
+];
+
+const LABELS = ['Jamais','Rarement','Parfois','Souvent','Presque toujours'];
+const PROFILES = [
+  {cond:k=>k.includes('tempspoursoi')&&k.includes('emotionnelle'), name:'La maman en surcharge silencieuse', desc:'Tu portes beaucoup, tu gères tout… mais tu t\'oublies. Tu fonctionnes en mode pilote automatique avec peu de récupération.'},
+  {cond:k=>k.includes('domestique')&&k.includes('organisation'),   name:'La gestionnaire invisible',         desc:'Tu orchestres tout dans l\'ombre. La logistique tourne, mais à quel prix pour toi ? Tu mérites d\'être vue.'},
+  {cond:k=>k.includes('soutien')&&k.includes('emotionnelle'),      name:'La survivante silencieuse',         desc:'Tu avances seule, sans filet. Tu as appris à ne compter que sur toi — mais ce poids est trop lourd pour une seule personne.'},
+  {cond:k=>k.includes('organisation')&&k.includes('parentale'),    name:'La perfectionniste saturée',        desc:'Tu veux bien faire sur tous les fronts. Cette exigence t\'épuise plus qu\'elle ne t\'aide.'},
+  {cond:k=>k.includes('imprevus')&&k.includes('domestique'),       name:'La pilote automatique',             desc:'Tu réagis plus que tu n\'agis. Les imprévus dictent ta vie. Reprendre le contrôle de ton agenda changerait tout.'},
+  {cond:()=>true,                                                   name:'La maman fragmentée',              desc:'Ton énergie est dispersée sur trop de fronts. Apprendre à concentrer tes ressources te permettrait de retrouver ton souffle.'}
+];
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let answers = {}, curQ = 0, scores = {}, globalScore = 0;
+let radarChart = null, evolChart = null;
+let currentUser = null;
+
+/* ═══════════════════════════════════════════
+   AUTH — Supabase
+═══════════════════════════════════════════ */
+async function initAuth() {
+  // Écoute les changements de session en temps réel
+  db.auth.onAuthStateChange((event, session) => {
+    if (session?.user) {
+      currentUser = session.user;
+      setUserUI(session.user);
+      hideAuthModal();
+    } else {
+      currentUser = null;
+      clearUserUI();
+      showAuthModal();
+    }
+  });
+
+  // Vérifie si une session existe déjà (ex: rechargement de page)
+  const { data: { session } } = await db.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    setUserUI(session.user);
+    hideAuthModal();
+  } else {
+    showAuthModal();
+  }
+}
+
+function setUserUI(user) {
+  const email = user.email || '';
+  const prenom = user.user_metadata?.prenom || email.split('@')[0] || 'Maman';
+  document.getElementById('user-pill').style.display = 'flex';
+  document.getElementById('user-av').textContent = prenom[0].toUpperCase();
+  document.getElementById('user-nm').textContent = prenom;
+}
+
+function clearUserUI() {
+  document.getElementById('user-pill').style.display = 'none';
+}
+
+function showAuthModal() {
+  document.getElementById('auth-overlay').style.display = 'flex';
+}
+
+function hideAuthModal() {
+  document.getElementById('auth-overlay').style.display = 'none';
+}
+
+function authTab(t) {
+  document.getElementById('form-in').style.display = t === 'in' ? 'block' : 'none';
+  document.getElementById('form-up').style.display = t === 'up' ? 'block' : 'none';
+  document.getElementById('tab-in').classList.toggle('on', t === 'in');
+  document.getElementById('tab-up').classList.toggle('on', t === 'up');
+  document.getElementById('auth-err-msg').style.display = 'none';
+  document.getElementById('auth-ok-msg').style.display = 'none';
+}
+
+function showAuthErr(msg) {
+  const el = document.getElementById('auth-err-msg');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function showAuthOk(msg) {
+  const el = document.getElementById('auth-ok-msg');
+  el.textContent = msg; el.style.display = 'block';
+  document.getElementById('auth-err-msg').style.display = 'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('in-email').value.trim();
+  const pwd   = document.getElementById('in-pwd').value;
+  if (!email || !pwd) { showAuthErr('Veuillez remplir tous les champs.'); return; }
+  const btn = document.getElementById('btn-in');
+  btn.textContent = 'Connexion…'; btn.disabled = true;
+
+  const { error } = await db.auth.signInWithPassword({ email, password: pwd });
+  btn.textContent = 'Se connecter'; btn.disabled = false;
+  if (error) { showAuthErr(error.message === 'Invalid login credentials' ? 'Courriel ou mot de passe incorrect.' : error.message); }
+}
+
+async function doSignup() {
+  const prenom = document.getElementById('up-prenom').value.trim();
+  const email  = document.getElementById('up-email').value.trim();
+  const pwd    = document.getElementById('up-pwd').value;
+  if (!prenom || !email || !pwd) { showAuthErr('Veuillez remplir tous les champs.'); return; }
+  if (pwd.length < 8) { showAuthErr('Mot de passe trop court (minimum 8 caractères).'); return; }
+  const btn = document.getElementById('btn-up');
+  btn.textContent = 'Création…'; btn.disabled = true;
+
+  const { error } = await db.auth.signUp({
+    email, password: pwd,
+    options: { data: { prenom } }
+  });
+  btn.textContent = 'Créer mon compte'; btn.disabled = false;
+  if (error) { showAuthErr(error.message); }
+  else { showAuthOk('Compte créé ! Vérifie ton courriel pour confirmer ton accès. ♡'); }
+}
+
+async function doLogout() {
+  await db.auth.signOut();
+  answers = {}; curQ = 0; scores = {}; globalScore = 0;
+  nav('questionnaire'); renderQ(0);
+}
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+function nav(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
+  document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('on'));
+  const v = document.getElementById('v-' + name);
+  if (v) { v.classList.add('on'); v.style.animation = 'none'; setTimeout(() => { v.style.animation = 'fadeUp .35s ease both'; }, 10); }
+  const map = {intro:'n-accueil', questionnaire:'n-diag', dashboard:'n-db', spheres:'n-sph', actions:'n-act', historique:'n-hist'};
+  if (map[name]) document.getElementById(map[name]).classList.add('on');
+  if (name === 'historique') loadHistorique();
+}
+
+/* ═══════════════════════════════════════════
+   QUESTIONNAIRE
+═══════════════════════════════════════════ */
+function renderQ(i) {
+  const si = Math.floor(i / 5), qi = i % 5, s = SPHERES[si];
+  document.getElementById('sph-em').textContent = s.e;
+  document.getElementById('sph-nm').textContent = s.n;
+  document.getElementById('prog').style.width = Math.max(Math.round(i / 40 * 100), 5) + '%';
+  document.getElementById('prog-lbl').textContent = 'Question ' + (i + 1) + ' sur 40';
+  const sel = answers[i];
+  const c = document.getElementById('q-container');
+  c.innerHTML = ''; c.style.animation = 'none';
+  setTimeout(() => { c.style.animation = 'fadeUp .3s ease both'; }, 10);
+  const d = document.createElement('div');
+  d.className = 'q-card';
+  d.innerHTML = '<p class="q-text">' + QS[si][qi] + '</p><div class="ans-opts">' +
+    LABELS.map((l, k) => '<button class="ans-btn' + (sel === k + 1 ? ' sel' : '') + '" onclick="selA(' + (k + 1) + ')">' + l + '</button>').join('') + '</div>';
+  c.appendChild(d);
+  document.getElementById('btn-prev').style.opacity = i === 0 ? '0' : '1';
+  document.getElementById('btn-prev').style.pointerEvents = i === 0 ? 'none' : 'auto';
+  document.getElementById('btn-next').textContent = i === 39 ? 'Voir mes résultats →' : 'Suivant →';
+}
+
+function selA(v) {
+  answers[curQ] = v;
+  document.querySelectorAll('.ans-btn').forEach((b, i) => b.classList.toggle('sel', i + 1 === v));
+}
+
+function nextQ() {
+  if (!answers[curQ]) {
+    document.querySelectorAll('.ans-btn').forEach(b => { b.style.borderColor = 'var(--coral)'; setTimeout(() => { b.style.borderColor = ''; }, 600); });
+    return;
+  }
+  if (curQ < 39) { curQ++; renderQ(curQ); }
+  else { runScoring(); }
+}
+
+function prevQ() { if (curQ > 0) { curQ--; renderQ(curQ); } }
+
+/* ═══════════════════════════════════════════
+   SCORING
+═══════════════════════════════════════════ */
+function computeScores() {
+  SPHERES.forEach((s, si) => {
+    let sum = 0;
+    for (let qi = 0; qi < 5; qi++) sum += answers[si * 5 + qi] || 3;
+    scores[s.k] = { raw: sum, pct: Math.round((sum / 25) * 100), score10: Math.round((sum / 25) * 10) };
+  });
+  const total = Object.values(scores).reduce((a, s) => a + s.raw, 0);
+  globalScore = Math.round(((total - 40) / (200 - 40)) * 100);
+}
+
+function getSatLevel(pct) {
+  if (pct <= 30) return { label: 'Charge sous contrôle', desc: 'Tu gères bien l\'ensemble. Maintenir tes bonnes habitudes est la priorité.', color: '#9DC4A0' };
+  if (pct <= 55) return { label: 'Surcharge active',     desc: 'Ton système est sous pression. Quelques ajustements peuvent faire une grande différence.', color: '#E8A84A' };
+  if (pct <= 75) return { label: 'Saturation élevée',    desc: 'Ton corps et ton mental te demandent un reset. C\'est le moment d\'agir.', color: '#E07060' };
+  return             { label: 'Mode survie',             desc: 'Tu fonctionnes en mode d\'urgence. Une aide immédiate est nécessaire.', color: '#D45A5A' };
+}
+
+function getProfile() {
+  const sorted = Object.keys(scores).sort((a, b) => scores[b].raw - scores[a].raw).slice(0, 2);
+  for (const p of PROFILES) { if (p.cond(sorted)) return p; }
+  return PROFILES[PROFILES.length - 1];
+}
+
+function getFuites() {
+  return Object.entries(scores).sort((a, b) => b[1].raw - a[1].raw).slice(0, 3).map(([k, v]) => {
+    const s = SPHERES.find(x => x.k === k);
+    return { name: s.n, pct: v.pct, emoji: s.e };
+  });
+}
+
+/* ═══════════════════════════════════════════
+   LOADING + APPEL IA
+═══════════════════════════════════════════ */
+function runScoring() {
+  nav('loading');
+  computeScores();
+  const steps = ['ls1', 'ls2', 'ls3', 'ls4'];
+  let i = 0;
+  const advance = () => {
+    if (i > 0) document.getElementById(steps[i - 1]).className = 'l-step done';
+    if (i < steps.length) { document.getElementById(steps[i]).className = 'l-step active'; i++; setTimeout(advance, 900); }
+    else { setTimeout(callClaudeAI, 400); }
+  };
+  advance();
+}
+
+async function callClaudeAI() {
+  const sat   = getSatLevel(globalScore);
+  const prof  = getProfile();
+  const fuites = getFuites();
+  const sphData = SPHERES.map(s => s.n + ': ' + scores[s.k].score10 + '/10').join(', ');
+
+  const prompt = `Tu es une conseillère bienveillante spécialisée dans la charge mentale maternelle. Tu parles à une maman francophone québécoise avec un ton chaleureux, humain, sans jugement.
+
+Résultats du diagnostic Marge Mentale™ :
+- Score global : ${globalScore}% (${sat.label})
+- Profil dominant : ${prof.name}
+- Scores par sphère : ${sphData}
+- Top 3 fuites d'énergie : ${fuites.map(f => f.name).join(', ')}
+
+Génère UNIQUEMENT un objet JSON valide (rien d'autre, aucun markdown) :
+{
+  "quote": "Phrase courte, puissante, rassurante, personnalisée (max 18 mots, style poétique doux)",
+  "analyse": "Paragraphe de 3-4 phrases analysant sa situation de façon personnalisée et empathique.",
+  "priorite1_titre": "Titre avec emoji",
+  "priorite1_desc": "Description concrète et actionnable (2 phrases max)",
+  "priorite2_titre": "Titre avec emoji",
+  "priorite2_desc": "Description concrète et actionnable (2 phrases max)",
+  "priorite3_titre": "Titre avec emoji",
+  "priorite3_desc": "Description concrète et actionnable (2 phrases max)",
+  "action_rapide": "Micro-action à faire dans les 5 prochaines minutes (1 phrase directe)",
+  "analyse_spheres": "2-3 phrases sur le pattern des sphères et quelle sphère traiter en premier."
+}`;
+
+  let ai = null;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    ai = JSON.parse(data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim());
+  } catch (e) { /* continue avec valeurs par défaut */ }
+
+  buildDashboard(ai);
+  await saveDiagnosticToDB(ai);
+}
+
+/* ═══════════════════════════════════════════
+   SUPABASE — Sauvegarder le diagnostic
+═══════════════════════════════════════════ */
+async function saveDiagnosticToDB(ai) {
+  if (!currentUser) return; // pas connectée = pas de sauvegarde
+
+  const sat  = getSatLevel(globalScore);
+  const prof = getProfile();
+
+  const { error } = await db.from('diagnostics').insert({
+    user_id:           currentUser.id,
+    score_global:      globalScore,
+    niveau_saturation: sat.label,
+    profil_dominant:   prof.name,
+    scores_spheres:    scores,
+    reponses_brutes:   answers,
+    ai_analyse:        ai?.analyse || null,
+    ai_priorites:      ai ? {
+      p1: { titre: ai.priorite1_titre, desc: ai.priorite1_desc },
+      p2: { titre: ai.priorite2_titre, desc: ai.priorite2_desc },
+      p3: { titre: ai.priorite3_titre, desc: ai.priorite3_desc }
+    } : null
+  });
+
+  if (!error) showToast('Diagnostic sauvegardé ♡');
+}
+
+/* ═══════════════════════════════════════════
+   SUPABASE — Charger l'historique
+═══════════════════════════════════════════ */
+async function loadHistorique() {
+  if (!currentUser) {
+    document.getElementById('hist-list').innerHTML = '<p style="font-size:13px;color:var(--text-lt);text-align:center;padding:30px;">Connecte-toi pour voir ton historique.</p>';
+    return;
+  }
+
+  const { data, error } = await db
+    .from('diagnostics')
+    .select('id, score_global, niveau_saturation, profil_dominant, created_at')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error || !data?.length) {
+    document.getElementById('hist-list').innerHTML = '<p style="font-size:13px;color:var(--text-lt);text-align:center;padding:30px;">Aucun diagnostic pour l\'instant. Complète ton premier diagnostic !</p>';
+    buildEvolChart([]);
+    return;
+  }
+
+  document.getElementById('hist-list').innerHTML = data.map((d, i) => {
+    const col = d.score_global > 75 ? 'var(--red)' : d.score_global > 55 ? 'var(--amber)' : 'var(--green)';
+    const date = new Date(d.created_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+    const prev = data[i + 1];
+    const diff = prev ? d.score_global - prev.score_global : null;
+    const tEl = diff === null ? '<div style="font-size:11px;color:var(--text-lt);">Premier diagnostic</div>'
+      : diff < 0 ? '<div style="font-size:11px;color:var(--green);">▼ ' + Math.abs(diff) + ' pts amélioration</div>'
+      : diff > 0 ? '<div style="font-size:11px;color:var(--red);">▲ ' + diff + ' pts augmentation</div>'
+      : '<div style="font-size:11px;color:var(--text-lt);">= Stable</div>';
+    return '<div class="hist-item"><div class="hist-date">' + date + '</div><div><div class="hist-score" style="color:' + col + ';">' + d.score_global + '%</div><div class="hist-lbl" style="color:' + col + ';">' + d.niveau_saturation + '</div></div><div class="hist-prof">' + d.profil_dominant + '</div>' + tEl + '</div>';
+  }).join('');
+
+  buildEvolChart(data.reverse()); // chronologique pour le graphique
+}
+
+/* ═══════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════ */
+function buildDashboard(ai) {
+  const sat  = getSatLevel(globalScore);
+  const prof = getProfile();
+  const fuites = getFuites();
+  const marge  = 100 - globalScore;
+
+  updateGauge(globalScore, sat);
+  document.getElementById('prof-nm').textContent   = prof.name;
+  document.getElementById('prof-desc').textContent = prof.desc;
+  document.getElementById('marge-val').innerHTML   = marge + '<span style="font-size:20px;">%</span>';
+  document.getElementById('marge-badge').textContent = marge < 20 ? 'Très faible' : marge < 40 ? 'Faible' : marge < 60 ? 'Modérée' : 'Bonne';
+  document.getElementById('marge-desc').textContent  = marge < 30 ? 'Chaque imprévu te met sous pression. Ton système n\'a presque plus de réserve mentale.' : 'Tu as encore une marge, mais protège-la activement.';
+  document.getElementById('fuites-list').innerHTML = fuites.map(f =>
+    '<div class="fuite-i"><div class="fuite-l">' + f.emoji + ' ' + f.name + '</div><div class="fuite-bw"><div class="fuite-b" style="width:' + f.pct + '%"></div></div><div class="fuite-p">' + f.pct + '%</div></div>'
+  ).join('');
+
+  const today = new Date();
+  document.getElementById('db-date').textContent = today.toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  if (ai) {
+    document.getElementById('ai-quote').textContent     = ai.quote || prof.desc;
+    document.getElementById('ai-narrative').textContent = ai.analyse || '';
+    document.getElementById('act-rapide').textContent   = ai.action_rapide || 'Écris tout ce que tu as en tête pendant 5 minutes sans t\'arrêter.';
+    document.getElementById('sph-ai-text').textContent  = ai.analyse_spheres || '';
+    document.getElementById('priorites-list').innerHTML = [
+      { t: ai.priorite1_titre, d: ai.priorite1_desc, cls: '' },
+      { t: ai.priorite2_titre, d: ai.priorite2_desc, cls: 'n2' },
+      { t: ai.priorite3_titre, d: ai.priorite3_desc, cls: 'n3' }
+    ].map((p, i) => '<div class="pri-i"><div class="pri-n ' + p.cls + '">' + (i + 1) + '</div><div style="flex:1"><div class="pri-t">' + p.t + '</div><div class="pri-d">' + p.d + '</div></div><button class="btn-rf" onclick="nav(\'actions\')">Voir l\'action</button></div>').join('');
+    document.getElementById('actions-list').innerHTML = [
+      { t: ai.priorite1_titre, d: ai.priorite1_desc },
+      { t: ai.priorite2_titre, d: ai.priorite2_desc },
+      { t: ai.priorite3_titre, d: ai.priorite3_desc }
+    ].map((p, i) => '<div class="pri-i" id="ac-' + i + '"><div class="pri-n ' + (i === 1 ? 'n2' : i === 2 ? 'n3' : '') + '">' + (i + 1) + '</div><div style="flex:1"><div class="pri-t">' + p.t + '</div><div class="pri-d">' + p.d + '</div></div><button class="btn-rf" onclick="markDone(' + i + ')">Commencer</button></div>').join('');
+  } else {
+    document.getElementById('ai-quote').textContent = 'Ce qui compte, ce n\'est pas d\'en faire plus, mais de porter moins de charge mentale.';
+    document.getElementById('ai-narrative').textContent = 'Ton diagnostic est prêt. Consulte tes priorités ci-dessous.';
+    document.getElementById('act-rapide').textContent = 'Écris tout ce que tu as en tête pendant 5 minutes sans t\'arrêter.';
+    document.getElementById('sph-ai-text').textContent = 'Complète un diagnostic pour voir l\'analyse IA de tes sphères.';
+    document.getElementById('priorites-list').innerHTML = [
+      { t: '😴 Protéger ton sommeil', d: 'Mettre en place une routine du soir simple et réaliste.', cls: '' },
+      { t: '🤝 Alléger une charge', d: 'Identifier 1 tâche que tu peux déléguer ou éliminer cette semaine.', cls: 'n2' },
+      { t: '💛 Prendre 1 temps pour toi', d: 'Bloquer un moment court mais non négociable juste pour toi.', cls: 'n3' }
+    ].map((p, i) => '<div class="pri-i"><div class="pri-n ' + p.cls + '">' + (i + 1) + '</div><div style="flex:1"><div class="pri-t">' + p.t + '</div><div class="pri-d">' + p.d + '</div></div></div>').join('');
+    document.getElementById('actions-list').innerHTML = document.getElementById('priorites-list').innerHTML;
+  }
+
+  buildSphereCards();
+  buildRadar();
+  nav('dashboard');
+}
+
+function markDone(i) {
+  const el = document.getElementById('ac-' + i);
+  if (el) { el.style.opacity = '0.5'; el.querySelector('.btn-rf').textContent = '✓ Fait'; showToast('Action cochée !'); }
+  if (currentUser) {
+    db.from('actions_completees').insert({ user_id: currentUser.id, action_titre: el?.querySelector('.pri-t')?.textContent || '' });
+  }
+}
+
+function buildSphereCards() {
+  document.getElementById('sph-grid').innerHTML = SPHERES.map(s => {
+    const sc = scores[s.k];
+    if (!sc) return '<div class="sph-c"><div class="sph-em">' + s.e + '</div><div class="sph-nm">' + s.n + '</div><div class="sph-sc">—</div></div>';
+    const cls = sc.score10 <= 3 ? 'sc-crit' : sc.score10 <= 6 ? 'sc-warn' : 'sc-ok';
+    const dot = sc.score10 <= 3 ? 'dot-r' : sc.score10 <= 6 ? 'dot-a' : 'dot-g';
+    return '<div class="sph-c ' + cls + '"><div class="' + dot + '"></div><div class="sph-em">' + s.e + '</div><div class="sph-nm">' + s.n + '</div><div class="sph-sc">' + sc.score10 + '<span class="sph-mx">/10</span></div></div>';
+  }).join('');
+}
+
+function updateGauge(pct, sat) {
+  document.getElementById('g-val').textContent = pct;
+  document.getElementById('g-lbl').textContent = sat.label;
+  document.getElementById('g-desc').textContent = sat.desc;
+  const cx = 52.5, cy = 68, r = 38;
+  const angle = Math.PI * (pct / 100);
+  const ex = cx - r * Math.cos(angle), ey = cy - r * Math.sin(angle);
+  const laf = pct > 50 ? 1 : 0;
+  document.getElementById('g-arc').setAttribute('d', 'M 14 68 A 38 38 0 ' + laf + ' 1 ' + ex.toFixed(1) + ' ' + ey.toFixed(1));
+  document.getElementById('g-arc').setAttribute('stroke', sat.color);
+  document.getElementById('g-dot').setAttribute('cx', ex.toFixed(1));
+  document.getElementById('g-dot').setAttribute('cy', ey.toFixed(1));
+  document.getElementById('g-dot').setAttribute('fill', sat.color);
+}
+
+function buildRadar() {
+  const data = SPHERES.map(s => scores[s.k] ? scores[s.k].score10 : 5);
+  if (radarChart) radarChart.destroy();
+  radarChart = new Chart(document.getElementById('radar'), {
+    type: 'radar',
+    data: { labels: SPHERES.map(s => s.n), datasets: [{ data, backgroundColor: 'rgba(224,112,96,0.15)', borderColor: '#E07060', borderWidth: 2, pointBackgroundColor: '#E07060', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { r: { min: 0, max: 10, ticks: { display: false }, grid: { color: 'rgba(155,139,122,0.2)' }, angleLines: { color: 'rgba(155,139,122,0.2)' }, pointLabels: { font: { size: 10, family: 'DM Sans' }, color: '#7A6558' } } } }
+  });
+}
+
+function buildEvolChart(data) {
+  if (!data || !data.length) {
+    document.getElementById('hist-list').innerHTML = '<p style="font-size:13px;color:var(--text-lt);text-align:center;padding:30px;">Complète ton premier diagnostic pour voir ton évolution ici.</p>';
+    return;
+  }
+  const labels = data.map(d => new Date(d.created_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' }));
+  const vals   = data.map(d => d.score_global);
+  if (evolChart) evolChart.destroy();
+  evolChart = new Chart(document.getElementById('evol-chart'), {
+    type: 'line',
+    data: { labels, datasets: [{ data: vals, borderColor: '#E07060', borderWidth: 2, backgroundColor: 'rgba(224,112,96,0.08)', pointBackgroundColor: '#E07060', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, tension: 0.3, fill: true }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100, grid: { color: 'rgba(155,139,122,0.15)' }, ticks: { font: { size: 10 }, color: '#A8998C', callback: v => v + '%' } }, x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#A8998C' } } } }
+  });
+}
+
+function resetDiag() {
+  answers = {}; curQ = 0; scores = {}; globalScore = 0;
+  if (radarChart) { radarChart.destroy(); radarChart = null; }
+  nav('questionnaire'); renderQ(0);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✓ ' + (msg || 'Sauvegardé');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+renderQ(0);
+nav('questionnaire');
+initAuth(); // démarre la vérification de session Supabase
+
+  {n:'Sommeil & énergie',    e:'😴', k:'sommeil'},
+  {n:'Charge domestique',    e:'🏠', k:'domestique'},
+  {n:'Charge parentale',     e:'👶', k:'parentale'},
+  {n:'Charge émotionnelle',  e:'💝', k:'emotionnelle'},
+  {n:'Soutien & entourage',  e:'🤝', k:'soutien'},
+  {n:'Organisation & planif.',e:'📋',k:'organisation'},
+  {n:'Temps pour soi',       e:'🌸', k:'tempspoursoi'},
+  {n:'Imprévus & interruptions',e:'⚡',k:'imprevus'}
+];
+
+const QS = [
+  ["J'ai du mal à m'endormir à cause de mes pensées.","Je me réveille fatiguée même après une nuit complète.","Je n'ai plus d'énergie pour les activités qui me plaisaient.","Je ressens un épuisement qui ne part pas avec le repos.","Je carbure à la volonté plutôt qu'à l'énergie naturelle."],
+  ["Je gère la majorité des tâches ménagères seule.","Je pense aux corvées même quand je veux me reposer.","La maison ne semble jamais vraiment en ordre.","Je planifie les repas, les courses et la logistique seule.","Je me sens responsable de tout dans la maison."],
+  ["Je gère la majorité des besoins de mes enfants seule.","Je pense constamment aux rendez-vous et besoins des enfants.","Je culpabilise de ne pas en faire assez pour mes enfants.","Je dois souvent interrompre ce que je fais pour les enfants.","Je me sens seule à porter la charge mentale parentale."],
+  ["Je gère les émotions des autres (enfants, partenaire).","Je me sens le pilier émotionnel de ma famille.","J'absorbe les tensions et conflits familiaux.","Je mets mes propres émotions de côté pour les autres.","Je me sens épuisée après des interactions avec mes proches."],
+  ["Je me sens seule dans ma charge mentale.","Mon entourage ne comprend pas vraiment ce que je vis.","Je n'ai personne à qui demander de l'aide facilement.","Je n'ose pas demander de l'aide par peur de déranger.","Je reçois peu de reconnaissance pour tout ce que je fais."],
+  ["Je dois garder en tête des dizaines de tâches à la fois.","J'ai peur d'oublier quelque chose d'important.","Je planifie la semaine et la logistique à l'avance.","Je me sens débordée par la quantité de choses à organiser.","Je n'ai jamais l'impression d'être vraiment à jour."],
+  ["J'ai du mal à trouver du temps rien que pour moi.","Je culpabilise quand je prends du temps pour moi.","Mes loisirs ont disparu de ma vie.","Je n'ai pas de moment dans ma journée qui m'appartient.","Je passe en dernier dans ma propre liste de priorités."],
+  ["Les imprévus me déstabilisent et augmentent mon stress.","Je suis souvent interrompue dans ce que je fais.","J'ai du mal à récupérer après un imprévu ou une urgence.","La charge des imprévus s'ajoute à une charge déjà lourde.","Je me sens en mode pompier plutôt qu'en mode construction."]
+];
+
+const LABELS = ['Jamais','Rarement','Parfois','Souvent','Presque toujours'];
+const PROFILES = [
+  {cond:k=>k.includes('tempspoursoi')&&k.includes('emotionnelle'), name:'La maman en surcharge silencieuse', desc:'Tu portes beaucoup, tu gères tout… mais tu t\'oublies. Tu fonctionnes en mode pilote automatique avec peu de récupération.'},
+  {cond:k=>k.includes('domestique')&&k.includes('organisation'),   name:'La gestionnaire invisible',         desc:'Tu orchestres tout dans l\'ombre. La logistique tourne, mais à quel prix pour toi ? Tu mérites d\'être vue.'},
+  {cond:k=>k.includes('soutien')&&k.includes('emotionnelle'),      name:'La survivante silencieuse',         desc:'Tu avances seule, sans filet. Tu as appris à ne compter que sur toi — mais ce poids est trop lourd pour une seule personne.'},
+  {cond:k=>k.includes('organisation')&&k.includes('parentale'),    name:'La perfectionniste saturée',        desc:'Tu veux bien faire sur tous les fronts. Cette exigence t\'épuise plus qu\'elle ne t\'aide.'},
+  {cond:k=>k.includes('imprevus')&&k.includes('domestique'),       name:'La pilote automatique',             desc:'Tu réagis plus que tu n\'agis. Les imprévus dictent ta vie. Reprendre le contrôle de ton agenda changerait tout.'},
+  {cond:()=>true,                                                   name:'La maman fragmentée',              desc:'Ton énergie est dispersée sur trop de fronts. Apprendre à concentrer tes ressources te permettrait de retrouver ton souffle.'}
+];
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let answers = {}, curQ = 0, scores = {}, globalScore = 0, radarChart = null, evolChart = null;
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+function nav(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
+  document.querySelectorAll('.nav-i').forEach(n => n.classList.remove('on'));
+  const v = document.getElementById('v-' + name);
+  if (v) { v.classList.add('on'); v.style.animation = 'none'; setTimeout(() => { v.style.animation = 'fadeUp .35s ease both'; }, 10); }
+  const map = {intro:'n-accueil', questionnaire:'n-diag', dashboard:'n-db', spheres:'n-sph', actions:'n-act', historique:'n-hist'};
+  if (map[name]) document.getElementById(map[name]).classList.add('on');
+  if (name === 'historique') buildEvolChart();
+}
+
+/* ═══════════════════════════════════════════
+   QUESTIONNAIRE
+═══════════════════════════════════════════ */
+function renderQ(i) {
+  const si = Math.floor(i / 5), qi = i % 5, s = SPHERES[si];
+  document.getElementById('sph-em').textContent = s.e;
+  document.getElementById('sph-nm').textContent = s.n;
+  document.getElementById('prog').style.width = Math.max(Math.round(i / 40 * 100), 5) + '%';
+  document.getElementById('prog-lbl').textContent = 'Question ' + (i + 1) + ' sur 40';
+  const sel = answers[i];
+  const c = document.getElementById('q-container');
+  c.innerHTML = '';
+  c.style.animation = 'none';
+  setTimeout(() => { c.style.animation = 'fadeUp .3s ease both'; }, 10);
+  const d = document.createElement('div');
+  d.className = 'q-card';
+  d.innerHTML = '<p class="q-text">' + QS[si][qi] + '</p><div class="ans-opts">' +
+    LABELS.map((l, k) => '<button class="ans-btn' + (sel === k + 1 ? ' sel' : '') + '" onclick="selA(' + (k + 1) + ')">' + l + '</button>').join('') +
+    '</div>';
+  c.appendChild(d);
+  document.getElementById('btn-prev').style.opacity = i === 0 ? '0' : '1';
+  document.getElementById('btn-prev').style.pointerEvents = i === 0 ? 'none' : 'auto';
+  document.getElementById('btn-next').textContent = i === 39 ? 'Voir mes résultats →' : 'Suivant →';
+}
+
+function selA(v) {
+  answers[curQ] = v;
+  document.querySelectorAll('.ans-btn').forEach((b, i) => b.classList.toggle('sel', i + 1 === v));
+}
+
+function nextQ() {
+  if (!answers[curQ]) {
+    document.querySelectorAll('.ans-btn').forEach(b => { b.style.borderColor = 'var(--coral)'; setTimeout(() => { b.style.borderColor = ''; }, 600); });
+    return;
+  }
+  if (curQ < 39) { curQ++; renderQ(curQ); }
+  else { runScoring(); }
+}
+
+function prevQ() { if (curQ > 0) { curQ--; renderQ(curQ); } }
+
+/* ═══════════════════════════════════════════
+   SCORING
+═══════════════════════════════════════════ */
+function computeScores() {
+  SPHERES.forEach((s, si) => {
+    let sum = 0;
+    for (let qi = 0; qi < 5; qi++) sum += answers[si * 5 + qi] || 3;
+    scores[s.k] = { raw: sum, pct: Math.round((sum / 25) * 100), score10: Math.round((sum / 25) * 10) };
+  });
+  const total = Object.values(scores).reduce((a, s) => a + s.raw, 0);
+  globalScore = Math.round(((total - 40) / (200 - 40)) * 100);
+}
+
+function getSatLevel(pct) {
+  if (pct <= 30) return { label: 'Charge sous contrôle', desc: 'Tu gères bien l\'ensemble. Maintenir tes bonnes habitudes est la priorité.', color: '#9DC4A0' };
+  if (pct <= 55) return { label: 'Surcharge active',     desc: 'Ton système est sous pression. Quelques ajustements peuvent faire une grande différence.', color: '#E8A84A' };
+  if (pct <= 75) return { label: 'Saturation élevée',    desc: 'Ton corps et ton mental te demandent un reset. C\'est le moment d\'agir.', color: '#E07060' };
+  return             { label: 'Mode survie',             desc: 'Tu fonctionnes en mode d\'urgence. Une aide immédiate est nécessaire.', color: '#D45A5A' };
+}
+
+function getProfile() {
+  const sorted = Object.keys(scores).sort((a, b) => scores[b].raw - scores[a].raw).slice(0, 2);
+  for (const p of PROFILES) { if (p.cond(sorted)) return p; }
+  return PROFILES[PROFILES.length - 1];
+}
+
+function getFuites() {
+  return Object.entries(scores).sort((a, b) => b[1].raw - a[1].raw).slice(0, 3).map(([k, v]) => {
+    const s = SPHERES.find(x => x.k === k);
+    return { name: s.n, pct: v.pct, emoji: s.e };
+  });
+}
+
+/* ═══════════════════════════════════════════
+   LOADING + APPEL IA
+═══════════════════════════════════════════ */
+function runScoring() {
+  nav('loading');
+  computeScores();
+  const steps = ['ls1', 'ls2', 'ls3', 'ls4'];
+  let i = 0;
+  const advance = () => {
+    if (i > 0) document.getElementById(steps[i - 1]).className = 'l-step done';
+    if (i < steps.length) { document.getElementById(steps[i]).className = 'l-step active'; i++; setTimeout(advance, 900); }
+    else { setTimeout(callClaudeAI, 400); }
+  };
+  advance();
+}
+
+async function callClaudeAI() {
+  const sat = getSatLevel(globalScore);
+  const prof = getProfile();
+  const fuites = getFuites();
+  const sphData = SPHERES.map(s => s.n + ': ' + scores[s.k].score10 + '/10').join(', ');
+
+  const prompt = `Tu es une conseillère bienveillante spécialisée dans la charge mentale maternelle. Tu parles à une maman francophone québécoise avec un ton chaleureux, humain, sans jugement.
+
+Résultats du diagnostic Marge Mentale™ :
+- Score global : ${globalScore}% (${sat.label})
+- Profil dominant : ${prof.name}
+- Scores par sphère : ${sphData}
+- Top 3 fuites d'énergie : ${fuites.map(f => f.name).join(', ')}
+
+Génère UNIQUEMENT un objet JSON valide (rien d'autre, aucun markdown, aucun texte avant ou après) :
+{
+  "quote": "Phrase courte, puissante, rassurante, personnalisée (max 18 mots, style poétique doux)",
+  "analyse": "Paragraphe de 3-4 phrases analysant sa situation de façon personnalisée, empathique et précise. Mentionne son profil et ses sphères critiques. Ton : chaleureux, honnête, encourageant.",
+  "priorite1_titre": "Titre avec emoji",
+  "priorite1_desc": "Description concrète et actionnable (2 phrases max)",
+  "priorite2_titre": "Titre avec emoji",
+  "priorite2_desc": "Description concrète et actionnable (2 phrases max)",
+  "priorite3_titre": "Titre avec emoji",
+  "priorite3_desc": "Description concrète et actionnable (2 phrases max)",
+  "action_rapide": "Micro-action à faire dans les 5 prochaines minutes (1 phrase directe)",
+  "analyse_spheres": "2-3 phrases sur le pattern des sphères et quelle sphère traiter en premier."
+}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const txt = data.content.map(c => c.text || '').join('');
+    const ai = JSON.parse(txt.replace(/```json|```/g, '').trim());
+    buildDashboard(ai);
+  } catch (e) {
+    buildDashboard(null);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════ */
+function buildDashboard(ai) {
+  const sat = getSatLevel(globalScore);
+  const prof = getProfile();
+  const fuites = getFuites();
+  const marge = 100 - globalScore;
+
+  updateGauge(globalScore, sat);
+  document.getElementById('prof-nm').textContent = prof.name;
+  document.getElementById('prof-desc').textContent = prof.desc;
+  document.getElementById('marge-val').innerHTML = marge + '<span style="font-size:20px;">%</span>';
+  document.getElementById('marge-badge').textContent = marge < 20 ? 'Très faible' : marge < 40 ? 'Faible' : marge < 60 ? 'Modérée' : 'Bonne';
+  document.getElementById('marge-desc').textContent = marge < 30 ? 'Chaque imprévu te met sous pression. Ton système n\'a presque plus de réserve mentale.' : 'Tu as encore une marge, mais protège-la activement.';
+
+  document.getElementById('fuites-list').innerHTML = fuites.map(f =>
+    '<div class="fuite-i"><div class="fuite-l">' + f.emoji + ' ' + f.name + '</div><div class="fuite-bw"><div class="fuite-b" style="width:' + f.pct + '%"></div></div><div class="fuite-p">' + f.pct + '%</div></div>'
+  ).join('');
+
+  const today = new Date();
+  document.getElementById('db-date').textContent = today.toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  if (ai) {
+    document.getElementById('ai-quote').textContent = ai.quote || prof.desc;
+    document.getElementById('ai-narrative').innerHTML = ai.analyse || '';
+    document.getElementById('act-rapide').textContent = ai.action_rapide || 'Écris tout ce que tu as en tête pendant 5 minutes sans t\'arrêter.';
+    document.getElementById('sph-ai-text').textContent = ai.analyse_spheres || '';
+
+    document.getElementById('priorites-list').innerHTML = [
+      { t: ai.priorite1_titre, d: ai.priorite1_desc, cls: '' },
+      { t: ai.priorite2_titre, d: ai.priorite2_desc, cls: 'n2' },
+      { t: ai.priorite3_titre, d: ai.priorite3_desc, cls: 'n3' }
+    ].map((p, i) =>
+      '<div class="pri-i"><div class="pri-n ' + p.cls + '">' + (i + 1) + '</div><div style="flex:1"><div class="pri-t">' + p.t + '</div><div class="pri-d">' + p.d + '</div></div><button class="btn-rf" onclick="nav(\'actions\')">Voir l\'action</button></div>'
+    ).join('');
+
+    document.getElementById('actions-list').innerHTML = [
+      { t: ai.priorite1_titre, d: ai.priorite1_desc },
+      { t: ai.priorite2_titre, d: ai.priorite2_desc },
+      { t: ai.priorite3_titre, d: ai.priorite3_desc }
+    ].map((p, i) =>
+      '<div class="pri-i" id="ac-' + i + '"><div class="pri-n ' + (i === 1 ? 'n2' : i === 2 ? 'n3' : '') + '">' + (i + 1) + '</div><div style="flex:1"><div class="pri-t">' + p.t + '</div><div class="pri-d">' + p.d + '</div></div><button class="btn-rf" onclick="markDone(' + i + ')">Commencer</button></div>'
+    ).join('');
+  } else {
+    document.getElementById('ai-quote').textContent = 'Ce qui compte, ce n\'est pas d\'en faire plus, mais de porter moins de charge mentale.';
+    document.getElementById('ai-narrative').textContent = 'Ton diagnostic est prêt. Consulte tes priorités ci-dessous.';
+    document.getElementById('act-rapide').textContent = 'Écris tout ce que tu as en tête pendant 5 minutes sans t\'arrêter. Vide ta tête pour retrouver de l\'espace.';
+    document.getElementById('sph-ai-text').textContent = 'Complète un diagnostic pour voir l\'analyse IA de tes sphères.';
+    document.getElementById('priorites-list').innerHTML = [
+      { t: '😴 Protéger ton sommeil', d: 'Mettre en place une routine du soir simple et réaliste.', cls: '' },
+      { t: '🤝 Alléger une charge', d: 'Identifier 1 tâche que tu peux déléguer ou éliminer cette semaine.', cls: 'n2' },
+      { t: '💛 Prendre 1 temps pour toi', d: 'Bloquer un moment court mais non négociable juste pour toi.', cls: 'n3' }
+    ].map((p, i) => '<div class="pri-i"><div class="pri-n ' + p.cls + '">' + (i + 1) + '</div><div style="flex:1"><div class="pri-t">' + p.t + '</div><div class="pri-d">' + p.d + '</div></div></div>').join('');
+    document.getElementById('actions-list').innerHTML = document.getElementById('priorites-list').innerHTML;
+  }
+
+  buildSphereCards();
+  buildRadar();
+  nav('dashboard');
+}
+
+function markDone(i) {
+  const el = document.getElementById('ac-' + i);
+  if (el) { el.style.opacity = '0.5'; el.querySelector('.btn-rf').textContent = '✓ Fait'; showToast('Action cochée !'); }
+}
+
+function buildSphereCards() {
+  document.getElementById('sph-grid').innerHTML = SPHERES.map(s => {
+    const sc = scores[s.k];
+    if (!sc) return '<div class="sph-c"><div class="sph-em">' + s.e + '</div><div class="sph-nm">' + s.n + '</div><div class="sph-sc">—</div></div>';
+    const cls = sc.score10 <= 3 ? 'sc-crit' : sc.score10 <= 6 ? 'sc-warn' : 'sc-ok';
+    const dot = sc.score10 <= 3 ? 'dot-r' : sc.score10 <= 6 ? 'dot-a' : 'dot-g';
+    return '<div class="sph-c ' + cls + '"><div class="' + dot + '"></div><div class="sph-em">' + s.e + '</div><div class="sph-nm">' + s.n + '</div><div class="sph-sc">' + sc.score10 + '<span class="sph-mx">/10</span></div></div>';
+  }).join('');
+}
+
+function updateGauge(pct, sat) {
+  document.getElementById('g-val').textContent = pct;
+  document.getElementById('g-lbl').textContent = sat.label;
+  document.getElementById('g-desc').textContent = sat.desc;
+  const cx = 52.5, cy = 68, r = 38;
+  const angle = Math.PI * (pct / 100);
+  const ex = cx - r * Math.cos(angle);
+  const ey = cy - r * Math.sin(angle);
+  const laf = pct > 50 ? 1 : 0;
+  document.getElementById('g-arc').setAttribute('d', 'M 14 68 A 38 38 0 ' + laf + ' 1 ' + ex.toFixed(1) + ' ' + ey.toFixed(1));
+  document.getElementById('g-arc').setAttribute('stroke', sat.color);
+  document.getElementById('g-dot').setAttribute('cx', ex.toFixed(1));
+  document.getElementById('g-dot').setAttribute('cy', ey.toFixed(1));
+  document.getElementById('g-dot').setAttribute('fill', sat.color);
+}
+
+function buildRadar() {
+  const data = SPHERES.map(s => scores[s.k] ? scores[s.k].score10 : 5);
+  if (radarChart) radarChart.destroy();
+  radarChart = new Chart(document.getElementById('radar'), {
+    type: 'radar',
+    data: {
+      labels: SPHERES.map(s => s.n),
+      datasets: [{ data, backgroundColor: 'rgba(224,112,96,0.15)', borderColor: '#E07060', borderWidth: 2, pointBackgroundColor: '#E07060', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { r: { min: 0, max: 10, ticks: { display: false }, grid: { color: 'rgba(155,139,122,0.2)' }, angleLines: { color: 'rgba(155,139,122,0.2)' }, pointLabels: { font: { size: 10, family: 'DM Sans' }, color: '#7A6558' } } } }
+  });
+}
+
+function buildEvolChart() {
+  // Données de démonstration — remplacées par les vraies données Supabase en prod
+  const hist = [
+    { date: '12 jan', score: 78, label: 'Saturation élevée',  profil: 'La maman en surcharge silencieuse', trend: null },
+    { date: '19 jan', score: 74, label: 'Saturation élevée',  profil: 'La maman en surcharge silencieuse', trend: 'dn' },
+    { date: '26 jan', score: 69, label: 'Surcharge active',   profil: 'La gestionnaire invisible',          trend: 'dn' },
+    { date: '2 fév',  score: 65, label: 'Surcharge active',   profil: 'La gestionnaire invisible',          trend: 'dn' },
+    { date: '9 fév',  score: 61, label: 'Surcharge active',   profil: 'La pilote automatique',              trend: 'dn' },
+  ];
+  document.getElementById('hist-list').innerHTML = hist.map(d => {
+    const col = d.score > 75 ? 'var(--red)' : d.score > 55 ? 'var(--amber)' : 'var(--green)';
+    const tEl = d.trend ? '<div class="trend-dn">▼ Amélioration</div>' : '<div class="trend-eq">Premier diagnostic</div>';
+    return '<div class="hist-item"><div class="hist-date">' + d.date + '</div><div><div class="hist-score" style="color:' + col + ';">' + d.score + '%</div><div class="hist-lbl" style="color:' + col + ';">' + d.label + '</div></div><div class="hist-prof">' + d.profil + '</div>' + tEl + '</div>';
+  }).join('');
+
+  if (evolChart) evolChart.destroy();
+  evolChart = new Chart(document.getElementById('evol-chart'), {
+    type: 'line',
+    data: {
+      labels: hist.map(d => d.date),
+      datasets: [{ data: hist.map(d => d.score), borderColor: '#E07060', borderWidth: 2, backgroundColor: 'rgba(224,112,96,0.08)', pointBackgroundColor: '#E07060', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, tension: 0.3, fill: true }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100, grid: { color: 'rgba(155,139,122,0.15)' }, ticks: { font: { size: 10 }, color: '#A8998C', callback: v => v + '%' } }, x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#A8998C' } } } }
+  });
+}
+
+function resetDiag() {
+  answers = {}; curQ = 0; scores = {}; globalScore = 0;
+  if (radarChart) { radarChart.destroy(); radarChart = null; }
+  nav('questionnaire');
+  renderQ(0);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✓ ' + (msg || 'Sauvegardé');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+renderQ(0);
+nav('questionnaire');
+</script>
+</body>
+</html>
