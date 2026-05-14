@@ -467,7 +467,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--beige);c
 const SUPABASE_URL = 'https://aypoudemzdqqgtbemxdl.supabase.co/rest/v1/'       // ex: https://xxxx.supabase.co
 const SUPABASE_KEY = 'sb_publishable_jnX0bm8J5Xo_gad-Qt9Y3A_eRCjcKGC '   // ex: eyJhbGci...
 
-const { createClient } = supabase
+const { createClient } = supabase.default || supabase
 const db = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 /* ═══════════════════════════════════════════
