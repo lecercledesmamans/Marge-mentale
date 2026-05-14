@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Marge Mentale™</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -464,11 +464,19 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--beige);c
    ⚠️  Remplace ces deux valeurs par les tiennes
    (Supabase → Project Settings → API)
 ═══════════════════════════════════════════ */
-const SUPABASE_URL = 'https://aypoudemzdqqgtbemxdl.supabase.co/rest/v1/'       // ex: https://xxxx.supabase.co
-const SUPABASE_KEY = 'sb_publishable_jnX0bm8J5Xo_gad-Qt9Y3A_eRCjcKGC '   // ex: eyJhbGci...
+const SUPABASE_URL = 'COLLE_TON_URL_ICI'       // ex: https://xxxx.supabase.co
+const SUPABASE_KEY = 'COLLE_TA_ANON_KEY_ICI'   // ex: sb_publishable_...
 
-const { createClient } = supabase.default || supabase
-const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+let db = null
+function initSupabase() {
+  try {
+    const _supabase = window.supabase || window.Supabase
+    if (!_supabase) { console.warn('Supabase non chargé'); return false }
+    const { createClient } = _supabase
+    db = createClient(SUPABASE_URL, SUPABASE_KEY)
+    return true
+  } catch(e) { console.warn('Erreur Supabase:', e); return false }
+}
 
 /* ═══════════════════════════════════════════
    DONNÉES
@@ -516,6 +524,11 @@ let currentUser = null;
    AUTH — Supabase
 ═══════════════════════════════════════════ */
 async function initAuth() {
+  const ready = initSupabase()
+  if (!ready) {
+    console.warn('Supabase non disponible — mode hors ligne')
+    return
+  }
   // Écoute les changements de session en temps réel
   db.auth.onAuthStateChange((event, session) => {
     if (session?.user) {
@@ -764,7 +777,7 @@ Génère UNIQUEMENT un objet JSON valide (rien d'autre, aucun markdown) :
    SUPABASE — Sauvegarder le diagnostic
 ═══════════════════════════════════════════ */
 async function saveDiagnosticToDB(ai) {
-  if (!currentUser) return; // pas connectée = pas de sauvegarde
+  if (!db || !currentUser) return;
 
   const sat  = getSatLevel(globalScore);
   const prof = getProfile();
@@ -791,7 +804,7 @@ async function saveDiagnosticToDB(ai) {
    SUPABASE — Charger l'historique
 ═══════════════════════════════════════════ */
 async function loadHistorique() {
-  if (!currentUser) {
+  if (!db || !currentUser) {
     document.getElementById('hist-list').innerHTML = '<p style="font-size:13px;color:var(--text-lt);text-align:center;padding:30px;">Connecte-toi pour voir ton historique.</p>';
     return;
   }
@@ -955,7 +968,7 @@ function showToast(msg) {
 ═══════════════════════════════════════════ */
 renderQ(0);
 nav('questionnaire');
-initAuth(); // démarre la vérification de session Supabase
+window.addEventListener('load', () => initAuth());
 
   {n:'Sommeil & énergie',    e:'😴', k:'sommeil'},
   {n:'Charge domestique',    e:'🏠', k:'domestique'},
